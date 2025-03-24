@@ -1,0 +1,40 @@
+alias centrifuge db 
+
+define step 20
+
+startup:
+s centrifuge Open 0
+l r1 centrifuge Rpm
+beq r1 r2 bumprpm 
+move r1 r2
+sleep 10
+j startup 
+
+bumprpm:
+add r0 r0 step
+s centrifuge Throttle r0
+s centrifuge CombustionLimiter r0
+beq r0 100 run
+j startup 
+
+run:
+sleep 10
+l r0 centrifuge Reagents  
+blt r0 500 run 
+j shutoff
+
+shutoff:
+s centrifuge Throttle 0
+s centrifuge CombustionLimiter 0
+sleep 10
+l r1 centrifuge Rpm
+l r0 centrifuge Stress 
+beq r1 0 empty 
+j shutoff 
+
+empty:
+yield
+s centrifuge Open 1
+l r0 centrifuge Reagents
+bgt r0 0 empty 
+j startup
